@@ -6,21 +6,17 @@
   <title>Document</title>
 </head>
 <body>
-  <div>
-    <p>
-      <div><strong>Vendor</strong></div>
-      <div id="vendor"></div>
-    </p>
-    <p>
-      <div><strong>User Agent</strong></div>
-      <div id="userAgent"></div>
-    </p>
+  <div id="container">
   </div>
   <script>
+    const keys = ['vendor', 'userAgent', 'vendorSub', 'product', 'productSub', 'appVersion', 'appName']
     document.addEventListener("DOMContentLoaded", function(event) {
-      console.log("DOM fully loaded and parsed");
-      document.querySelector('#vendor').innerHTML = JSON.stringify(window.navigator.vendor);
-      document.querySelector('#userAgent').innerHTML = JSON.stringify(window.navigator.userAgent);
+      document.querySelector('#container').innerHTML = keys.map(key => `
+        <p>
+          <div><strong>${key}</strong></div>
+          <code>${navigator[key]}</code>
+        </p>      
+      `).join('')
     });
   </script>
 </body>
