@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div>
+    <p>
+      <div><strong>Vendor</strong></div>
+      <div id="vendor"></div>
+    </p>
+    <p>
+      <div><strong>User Agent</strong></div>
+      <div id="userAgent"></div>
+    </p>
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", function(event) {
+      console.log("DOM fully loaded and parsed");
+      document.querySelector('#vendor').innerHTML = JSON.stringify(window.navigator.vendor);
+      document.querySelector('#userAgent').innerHTML = JSON.stringify(window.navigator.userAgent);
+    });
+  </script>
+</body>
+</html>
