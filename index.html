@@ -1,23 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-</head>
-<body>
-  <div id="container">
-  </div>
-  <script>
-    const keys = ['vendor', 'userAgent', 'vendorSub', 'product', 'productSub', 'appVersion', 'appName']
-    document.addEventListener("DOMContentLoaded", function(event) {
-      document.querySelector('#container').innerHTML = keys.map(key => `
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="container"></div>
+    <script>
+      const keys = ["vendor", "userAgent", "vendorSub", "product", "productSub", "appVersion", "appName", "language", "languages"];
+      document.addEventListener("DOMContentLoaded", function (event) {
+        document.querySelector("#container").innerHTML = keys
+          .map(
+            (key) => `
         <p>
           <div><strong>${key}</strong></div>
           <code>${navigator[key]}</code>
         </p>      
-      `).join('')
-    });
-  </script>
-</body>
+      `
+          )
+          .join("");
+      });
+    </script>
+  </body>
 </html>
