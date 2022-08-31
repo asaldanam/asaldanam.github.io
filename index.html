@@ -16,7 +16,13 @@
         <p>
           <div><strong>${key}</strong></div>
           <code>${navigator[key]}</code>
-        </p>      
+        </p>
+        <p>
+          <div>userAgentData/div>
+          <pre>
+            <code>${JSON.stringify(navigator.userAgentData, null, 2)}</code>
+          </pre>
+        </p>            
       `
           )
           .join("");
