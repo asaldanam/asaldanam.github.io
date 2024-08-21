@@ -32,18 +32,23 @@
     </script> -->
   <script>
     (async () => {
+      const log = (...args) => {
+        console.log(...args);
+        document.querySelector('#container').innerHTML += `<pre>${JSON.stringify(args, null, 2)}</pre>`;
+      }
+
       const media = await navigator.mediaDevices?.getUserMedia?.({ audio: true, video: true });
-      console.log({ media });
+      log({ media });
 
       const peerConnection1 = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-      peerConnection1.addEventListener('signalingstatechange', _ => console.log('1 signaling state ' + peerConnection1.signalingState));
-      peerConnection1.addEventListener('icegatheringstatechange', _ => console.log('1 ICE gathering state ' + peerConnection1.iceGatheringState));
-      peerConnection1.addEventListener('connectionstatechange', _ => console.log('1 connection state ' + peerConnection1.connectionState));
+      peerConnection1.addEventListener('signalingstatechange', _ => log('1 signaling state ' + peerConnection1.signalingState));
+      peerConnection1.addEventListener('icegatheringstatechange', _ => log('1 ICE gathering state ' + peerConnection1.iceGatheringState));
+      peerConnection1.addEventListener('connectionstatechange', _ => log('1 connection state ' + peerConnection1.connectionState));
 
       const peerConnection2 = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-      peerConnection2.addEventListener('signalingstatechange', _ => console.log('2 signaling state ' + peerConnection1.signalingState));
-      peerConnection2.addEventListener('icegatheringstatechange', _ => console.log('2 ICE gathering state ' + peerConnection1.iceGatheringState));
-      peerConnection2.addEventListener('connectionstatechange', _ => console.log('2 connection state ' + peerConnection1.connectionState));
+      peerConnection2.addEventListener('signalingstatechange', _ => log('2 signaling state ' + peerConnection1.signalingState));
+      peerConnection2.addEventListener('icegatheringstatechange', _ => log('2 ICE gathering state ' + peerConnection1.iceGatheringState));
+      peerConnection2.addEventListener('connectionstatechange', _ => log('2 connection state ' + peerConnection1.connectionState));
 
       const dataChannel = peerConnection1.createDataChannel(null);
 
@@ -56,14 +61,14 @@
       await peerConnection1.setRemoteDescription(answer);
 
       peerConnection1.addEventListener('icecandidate', event => {
-        console.log('1 ICE candidate ' + (event.candidate ? event.candidate.candidate : 'null'))
+        log('1 ICE candidate ' + (event.candidate ? event.candidate.candidate : 'null'))
         if (event.candidate !== null) {
           peerConnection2.addIceCandidate(event.candidate);
         }
       });
 
       peerConnection2.addEventListener('icecandidate', event => {
-        console.log('2 ICE candidate ' + (event.candidate ? event.candidate.candidate : 'null'))
+        log('2 ICE candidate ' + (event.candidate ? event.candidate.candidate : 'null'))
         if (event.candidate !== null) {
           peerConnection1.addIceCandidate(event.candidate);
         }
@@ -78,7 +83,7 @@
       });
 
       peerConnection2.addEventListener('datachannel', event => {
-        console.log(event.channel, 'dc 2');
+        log(event.channel, 'dc 2');
         event.channel.addEventListener('open', () => {
           event.channel.send('message from 2 to 1');
         });
