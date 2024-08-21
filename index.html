@@ -39,30 +39,28 @@
     const config = {
       iceServers: [
         {
-          url: 'turn:numb.viagenie.ca',
-          credential: 'muazkh',
-          username: 'webrtc@live.com'
+          urls: "stun:stun.relay.metered.ca:80",
         },
         {
-          url: 'turn:192.158.29.39:3478?transport=udp',
-          credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-          username: '28224511:1379330808'
+          urls: "turn:global.relay.metered.ca:80",
+          username: "72f8d2483176e6a31214a3a0",
+          credential: "se8A8xoQLnCi6k+c",
         },
         {
-          url: 'turn:192.158.29.39:3478?transport=tcp',
-          credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-          username: '28224511:1379330808'
+          urls: "turn:global.relay.metered.ca:80?transport=tcp",
+          username: "72f8d2483176e6a31214a3a0",
+          credential: "se8A8xoQLnCi6k+c",
         },
         {
-          url: 'turn:turn.bistri.com:80',
-          credential: 'homeo',
-          username: 'homeo'
+          urls: "turn:global.relay.metered.ca:443",
+          username: "72f8d2483176e6a31214a3a0",
+          credential: "se8A8xoQLnCi6k+c",
         },
         {
-          url: 'turn:turn.anyfirewall.com:443?transport=tcp',
-          credential: 'webrtc',
-          username: 'webrtc'
-        }
+          urls: "turns:global.relay.metered.ca:443?transport=tcp",
+          username: "72f8d2483176e6a31214a3a0",
+          credential: "se8A8xoQLnCi6k+c",
+        },
       ],
     };
 
