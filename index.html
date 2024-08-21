@@ -45,8 +45,13 @@
         });
       }
 
-      // const media = await navigator.mediaDevices?.getUserMedia?.({ audio: true, video: true });
-      // log({ media });
+      const isSafariIos = navigator.userAgent.includes('Safari') && navigator.userAgent.includes('Mobile');
+      log({ isSafariIos });
+
+      if (isSafariIos) {
+        const media = await navigator.mediaDevices?.getUserMedia?.({ audio: true, video: true });
+        log({ media: !!media });
+      }
 
       const config = undefined;
 
