@@ -5,10 +5,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Document</title>
+  <style>
+    pre {
+      font-size: 11px;
+      margin: 0;
+    }
+  </style>
 </head>
 
 <body>
-  <div id="container"></div>
+  <code id="container"></code>
   <!-- <script>
       const keys = ["vendor", "userAgent", "vendorSub", "product", "productSub", "appVersion", "appName", "language", "languages"];
       document.addEventListener("DOMContentLoaded", function (event) {
@@ -34,11 +40,13 @@
     (async () => {
       const log = (...args) => {
         console.log(...args);
-        document.querySelector('#container').innerHTML += `<pre>${JSON.stringify(args, null, 2)}</pre>`;
+        args.forEach(arg => {
+          document.querySelector('#container').innerHTML += `<pre>${JSON.stringify(arg, null, 2)}</pre>`;
+        });
       }
 
-      const media = await navigator.mediaDevices?.getUserMedia?.({ audio: true, video: true });
-      log({ media });
+      // const media = await navigator.mediaDevices?.getUserMedia?.({ audio: true, video: true });
+      // log({ media });
 
       const peerConnection1 = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
       peerConnection1.addEventListener('signalingstatechange', _ => log('1 signaling state ' + peerConnection1.signalingState));
@@ -79,7 +87,7 @@
       });
 
       dataChannel.addEventListener('message', event => {
-        console.warn('2: ' + event.data);
+        log('2: ' + event.data);
       });
 
       peerConnection2.addEventListener('datachannel', event => {
@@ -89,7 +97,7 @@
         });
 
         event.channel.addEventListener('message', event => {
-          console.warn('1: ' + event.data);
+          log('1: ' + event.data);
         });
       });
     })();
