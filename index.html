@@ -36,9 +36,42 @@
       log({ media: !!media });
     }
 
-    const config = undefined;
+    const config = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        { urls: 'stun:stun.services.mozilla.com' },
+        { urls: 'stun:stun.stunprotocol.org:3478' },
+        { urls: 'stun:stun.voipbuster.com' },
+        { urls: 'stun:stun.voxgratia.org' },
+        { urls: 'stun:stun.xten.com' },
+        { urls: 'stun:stun.schlund.de' },
+        { urls: 'stun:stun.iptel.org' },
+        { urls: 'stun:stun.ideasip.com' },
+        { urls: 'stun:stun.ekiga.net' },
+        { urls: 'stun:stun.12connect.com' },
+        { urls: 'stun:stun.12voip.com' },
+        { urls: 'stun:stun.1und1.de' },
+        { urls: 'stun:stun.2talk.co.nz' },
+        { urls: 'stun:stun.3clogic.com' },
+        { urls: 'stun:stun.3cx.com' },
+        { urls: 'stun:stun.3gppnetwork.org' },
+        { urls: 'stun:stun.3starsnet.com' },
+        { urls: 'stun:stun.4g.de' },
+        { urls: 'stun:stun.4psa.com' },
+        { urls: 'stun:stun.5centscdn.net' },
+        { urls: 'stun:stun.5elementscloud.com' },
+        { urls: 'stun:stun.5x5pbx.com' },
+        { urls: 'stun:stun.7rtc.com' },
+        { urls: 'stun:stun.8050.com' },
+      ]
+    };
 
-    const peer1 = new RTCPeerConnection(config);
+    const peer1 = new RTCPeerConnection(config)
+
     peer1.addEventListener('signalingstatechange', _ => log('1 signaling state ' + peer1.signalingState));
     peer1.addEventListener('icegatheringstatechange', _ => log('1 ICE gathering state ' + peer1.iceGatheringState));
     peer1.addEventListener('connectionstatechange', _ => log('1 connection state ' + peer1.connectionState, peer1));
