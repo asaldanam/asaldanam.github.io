@@ -38,37 +38,37 @@
 
     const config = undefined;
 
-    const peerConnection1 = new RTCPeerConnection(config);
-    peerConnection1.addEventListener('signalingstatechange', _ => log('1 signaling state ' + peerConnection1.signalingState));
-    peerConnection1.addEventListener('icegatheringstatechange', _ => log('1 ICE gathering state ' + peerConnection1.iceGatheringState));
-    peerConnection1.addEventListener('connectionstatechange', _ => log('1 connection state ' + peerConnection1.connectionState));
+    const peer1 = new RTCPeerConnection(config);
+    peer1.addEventListener('signalingstatechange', _ => log('1 signaling state ' + peer1.signalingState));
+    peer1.addEventListener('icegatheringstatechange', _ => log('1 ICE gathering state ' + peer1.iceGatheringState));
+    peer1.addEventListener('connectionstatechange', _ => log('1 connection state ' + peer1.connectionState, peer1));
 
-    const peerConnection2 = new RTCPeerConnection(config);
-    peerConnection2.addEventListener('signalingstatechange', _ => log('2 signaling state ' + peerConnection1.signalingState));
-    peerConnection2.addEventListener('icegatheringstatechange', _ => log('2 ICE gathering state ' + peerConnection1.iceGatheringState));
-    peerConnection2.addEventListener('connectionstatechange', _ => log('2 connection state ' + peerConnection1.connectionState));
+    const peer2 = new RTCPeerConnection(config);
+    peer2.addEventListener('signalingstatechange', _ => log('2 signaling state ' + peer2.signalingState));
+    peer2.addEventListener('icegatheringstatechange', _ => log('2 ICE gathering state ' + peer2.iceGatheringState));
+    peer2.addEventListener('connectionstatechange', _ => log('2 connection state ' + peer2.connectionState, peer2));
 
-    const dataChannel = peerConnection1.createDataChannel(null);
+    const dataChannel = peer1.createDataChannel(null);
 
-    const offer = await peerConnection1.createOffer({ iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: true });
-    await peerConnection1.setLocalDescription(offer);
-    await peerConnection2.setRemoteDescription(offer);
+    const offer = await peer1.createOffer({ iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: true });
+    await peer1.setLocalDescription(offer);
+    await peer2.setRemoteDescription(offer);
 
-    const answer = await peerConnection2.createAnswer({ iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: true });
-    await peerConnection2.setLocalDescription(answer);
-    await peerConnection1.setRemoteDescription(answer);
+    const answer = await peer2.createAnswer({ iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: true });
+    await peer2.setLocalDescription(answer);
+    await peer1.setRemoteDescription(answer);
 
-    peerConnection1.addEventListener('icecandidate', event => {
+    peer1.addEventListener('icecandidate', event => {
       log('1 ICE candidate ' + (event.candidate ? event.candidate.candidate : 'null'))
       if (event.candidate !== null) {
-        peerConnection2.addIceCandidate(event.candidate);
+        peer2.addIceCandidate(event.candidate);
       }
     });
 
-    peerConnection2.addEventListener('icecandidate', event => {
+    peer2.addEventListener('icecandidate', event => {
       log('2 ICE candidate ' + (event.candidate ? event.candidate.candidate : 'null'))
       if (event.candidate !== null) {
-        peerConnection1.addIceCandidate(event.candidate);
+        peer1.addIceCandidate(event.candidate);
       }
     });
 
@@ -80,7 +80,7 @@
       log('2: ' + event.data);
     });
 
-    peerConnection2.addEventListener('datachannel', event => {
+    peer2.addEventListener('datachannel', event => {
       log(event.channel, 'dc 2');
       event.channel.addEventListener('open', () => {
         event.channel.send('message from 2 to 1');
