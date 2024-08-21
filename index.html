@@ -15,99 +15,81 @@
 
 <body>
   <code id="container"></code>
-  <!-- <script>
-      const keys = ["vendor", "userAgent", "vendorSub", "product", "productSub", "appVersion", "appName", "language", "languages"];
-      document.addEventListener("DOMContentLoaded", function (event) {
-        document.querySelector("#container").innerHTML = keys
-          .map(
-            (key) => `
-        <p>
-          <div><strong>${key}</strong></div>
-          <code>${navigator[key]}</code>
-        </p>
-        <p>
-          <div>userAgentData/div>
-          <pre>
-            <code>${JSON.stringify(navigator.userAgentData, null, 2)}</code>
-          </pre>
-        </p>            
-      `
-          )
-          .join("");
-      });
-    </script> -->
   <script>
-    (async () => {
-      const log = (...args) => {
-        console.log(...args);
-        args.forEach(arg => {
-          document.querySelector('#container').innerHTML += `<pre>${JSON.stringify(arg, null, 2)}</pre>`;
-        });
+    const log = (...args) => {
+      console.log(...args);
+      args.forEach(arg => {
+        document.querySelector('#container').innerHTML += `<pre>${JSON.stringify(arg, null, 2)}</pre>`;
+      });
+    }
+  </script>
+  <script type="module">
+    import webrtcAdapter from 'https://cdn.jsdelivr.net/npm/webrtc-adapter@9.0.1/+esm'
+    log('webrtcAdapter browser', webrtcAdapter.browserDetails.browser)
+    log('webrtcAdapter version', webrtcAdapter.browserDetails.version)
+
+    const isSafariIos = navigator.userAgent.includes('Safari') && navigator.userAgent.includes('Mobile');
+    log({ isSafariIos });
+
+    if (isSafariIos) {
+      const media = await navigator.mediaDevices?.getUserMedia?.({ audio: true, video: true });
+      log({ media: !!media });
+    }
+
+    const config = undefined;
+
+    const peerConnection1 = new RTCPeerConnection(config);
+    peerConnection1.addEventListener('signalingstatechange', _ => log('1 signaling state ' + peerConnection1.signalingState));
+    peerConnection1.addEventListener('icegatheringstatechange', _ => log('1 ICE gathering state ' + peerConnection1.iceGatheringState));
+    peerConnection1.addEventListener('connectionstatechange', _ => log('1 connection state ' + peerConnection1.connectionState));
+
+    const peerConnection2 = new RTCPeerConnection(config);
+    peerConnection2.addEventListener('signalingstatechange', _ => log('2 signaling state ' + peerConnection1.signalingState));
+    peerConnection2.addEventListener('icegatheringstatechange', _ => log('2 ICE gathering state ' + peerConnection1.iceGatheringState));
+    peerConnection2.addEventListener('connectionstatechange', _ => log('2 connection state ' + peerConnection1.connectionState));
+
+    const dataChannel = peerConnection1.createDataChannel(null);
+
+    const offer = await peerConnection1.createOffer();
+    await peerConnection1.setLocalDescription(offer);
+    await peerConnection2.setRemoteDescription(offer);
+
+    const answer = await peerConnection2.createAnswer();
+    await peerConnection2.setLocalDescription(answer);
+    await peerConnection1.setRemoteDescription(answer);
+
+    peerConnection1.addEventListener('icecandidate', event => {
+      log('1 ICE candidate ' + (event.candidate ? event.candidate.candidate : 'null'))
+      if (event.candidate !== null) {
+        peerConnection2.addIceCandidate(event.candidate);
       }
+    });
 
-      const isSafariIos = navigator.userAgent.includes('Safari') && navigator.userAgent.includes('Mobile');
-      log({ isSafariIos });
-
-      if (isSafariIos) {
-        const media = await navigator.mediaDevices?.getUserMedia?.({ audio: true, video: true });
-        log({ media: !!media });
+    peerConnection2.addEventListener('icecandidate', event => {
+      log('2 ICE candidate ' + (event.candidate ? event.candidate.candidate : 'null'))
+      if (event.candidate !== null) {
+        peerConnection1.addIceCandidate(event.candidate);
       }
+    });
 
-      const config = undefined;
+    dataChannel.addEventListener('open', () => {
+      dataChannel.send('message from 1 to 2');
+    });
 
-      const peerConnection1 = new RTCPeerConnection(config);
-      peerConnection1.addEventListener('signalingstatechange', _ => log('1 signaling state ' + peerConnection1.signalingState));
-      peerConnection1.addEventListener('icegatheringstatechange', _ => log('1 ICE gathering state ' + peerConnection1.iceGatheringState));
-      peerConnection1.addEventListener('connectionstatechange', _ => log('1 connection state ' + peerConnection1.connectionState));
+    dataChannel.addEventListener('message', event => {
+      log('2: ' + event.data);
+    });
 
-      const peerConnection2 = new RTCPeerConnection(config);
-      peerConnection2.addEventListener('signalingstatechange', _ => log('2 signaling state ' + peerConnection1.signalingState));
-      peerConnection2.addEventListener('icegatheringstatechange', _ => log('2 ICE gathering state ' + peerConnection1.iceGatheringState));
-      peerConnection2.addEventListener('connectionstatechange', _ => log('2 connection state ' + peerConnection1.connectionState));
-
-      const dataChannel = peerConnection1.createDataChannel(null);
-
-      const offer = await peerConnection1.createOffer();
-      await peerConnection1.setLocalDescription(offer);
-      await peerConnection2.setRemoteDescription(offer);
-
-      const answer = await peerConnection2.createAnswer();
-      await peerConnection2.setLocalDescription(answer);
-      await peerConnection1.setRemoteDescription(answer);
-
-      peerConnection1.addEventListener('icecandidate', event => {
-        log('1 ICE candidate ' + (event.candidate ? event.candidate.candidate : 'null'))
-        if (event.candidate !== null) {
-          peerConnection2.addIceCandidate(event.candidate);
-        }
+    peerConnection2.addEventListener('datachannel', event => {
+      log(event.channel, 'dc 2');
+      event.channel.addEventListener('open', () => {
+        event.channel.send('message from 2 to 1');
       });
 
-      peerConnection2.addEventListener('icecandidate', event => {
-        log('2 ICE candidate ' + (event.candidate ? event.candidate.candidate : 'null'))
-        if (event.candidate !== null) {
-          peerConnection1.addIceCandidate(event.candidate);
-        }
+      event.channel.addEventListener('message', event => {
+        log('1: ' + event.data);
       });
-
-      dataChannel.addEventListener('open', () => {
-        dataChannel.send('message from 1 to 2');
-      });
-
-      dataChannel.addEventListener('message', event => {
-        log('2: ' + event.data);
-      });
-
-      peerConnection2.addEventListener('datachannel', event => {
-        log(event.channel, 'dc 2');
-        event.channel.addEventListener('open', () => {
-          event.channel.send('message from 2 to 1');
-        });
-
-        event.channel.addEventListener('message', event => {
-          log('1: ' + event.data);
-        });
-      });
-    })();
+    });
   </script>
 </body>
 
