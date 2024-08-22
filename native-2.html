@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+        pre {
+            font-size: 11px;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <code id="container"></code>
+    <script>
+        const log = (...args) => {
+            console.log(...args);
+            args.forEach(arg => {
+                document.querySelector('#container').innerHTML += `<pre>${JSON.stringify(arg, null, 2)}</pre>`;
+            });
+        }
+    </script>
+    <script type="module">
+        import webrtcAdapter from 'https://cdn.jsdelivr.net/npm/webrtc-adapter@9.0.1/+esm'
+        log('webrtcAdapter browser', webrtcAdapter.browserDetails.browser)
+        log('webrtcAdapter version', webrtcAdapter.browserDetails.version)
+
+        const mode = location.hash === '#host' ? 'host' : 'guest';
+
+        const isSafariIos = navigator.userAgent.includes('Safari') && navigator.userAgent.includes('Mobile');
+        log({ isSafariIos });
+
+        if (isSafariIos) {
+            const media = await navigator.mediaDevices?.getUserMedia?.({ audio: true, video: true });
+            log({ media: !!media });
+        }
+
+        const config = {
+            iceServers: [
+                {
+                    urls: "stun:stun.relay.metered.ca:80",
+                },
+                {
+                    urls: "turn:global.relay.metered.ca:80",
+                    username: "72f8d2483176e6a31214a3a0",
+                    credential: "se8A8xoQLnCi6k+c",
+                },
+                {
+                    urls: "turn:global.relay.metered.ca:80?transport=tcp",
+                    username: "72f8d2483176e6a31214a3a0",
+                    credential: "se8A8xoQLnCi6k+c",
+                },
+                {
+                    urls: "turn:global.relay.metered.ca:443",
+                    username: "72f8d2483176e6a31214a3a0",
+                    credential: "se8A8xoQLnCi6k+c",
+                },
+                {
+                    urls: "turns:global.relay.metered.ca:443?transport=tcp",
+                    username: "72f8d2483176e6a31214a3a0",
+                    credential: "se8A8xoQLnCi6k+c",
+                },
+            ],
+        };
+
+        const local = new RTCPeerConnection(config)
+        local.addEventListener('signalingstatechange', _ => log('LOCAL: signalingstatechange: ' + local.signalingState));
+        local.addEventListener('icegatheringstatechange', _ => log('LOCAL: icegatheringstatechange: ' + local.iceGatheringState));
+        local.addEventListener('connectionstatechange', _ => log('LOCAL: connectionstatechange: ' + local.connectionState, local));
+
+        const remote = new RTCPeerConnection(config);
+        remote.addEventListener('signalingstatechange', _ => log('REMOTE signalingstatechange: ' + remote.signalingState));
+        remote.addEventListener('icegatheringstatechange', _ => log('REMOTE icegatheringstatechange: ' + remote.iceGatheringState));
+        remote.addEventListener('connectionstatechange', _ => log('REMOTE connectionstatechange: ' + remote.connectionState, remote));
+
+        const dataChannel = local.createDataChannel(null);
+
+        if (mode === 'host') {
+            const offer = await local.createOffer();
+            await local.setLocalDescription(offer);
+            await remote.setRemoteDescription(offer);
+            window.prompt('copy offer', JSON.stringify(offer));
+
+            // get answer from prompt
+            const answer = JSON.parse(window.prompt('answer'));
+            await local.setRemoteDescription(answer);
+            await remote.setLocalDescription(answer);
+        }
+
+        if (mode === 'guest') {
+            const offer = JSON.parse(window.prompt('offer'));
+            await remote.setRemoteDescription(offer);
+
+            const answer = await remote.createAnswer();
+            window.prompt('copy answer', JSON.stringify(answer));
+
+            await local.setRemoteDescription(answer);
+            await remote.setLocalDescription(answer);
+        }
+
+        // window.prompt('offer', JSON.stringify(offer));
+
+        // const answer = await remote.createAnswer();
+        // await remote.setLocalDescription(answer);
+        // await local.setRemoteDescription(answer);
+
+        local.addEventListener('icecandidate', event => {
+            log('1 ICE candidate ' + (event.candidate ? event.candidate.candidate : 'null'))
+            if (event.candidate !== null) {
+                remote.addIceCandidate(event.candidate);
+            }
+        });
+
+        remote.addEventListener('icecandidate', event => {
+            log('2 ICE candidate ' + (event.candidate ? event.candidate.candidate : 'null'))
+            if (event.candidate !== null) {
+                local.addIceCandidate(event.candidate);
+            }
+        });
+
+        dataChannel.addEventListener('open', () => {
+            dataChannel.send('message from 1 to 2');
+        });
+
+        dataChannel.addEventListener('message', event => {
+            log('2: ' + event.data);
+        });
+
+        remote.addEventListener('datachannel', event => {
+            log(event.channel, 'dc 2');
+            event.channel.addEventListener('open', () => {
+                event.channel.send('message from 2 to 1');
+            });
+
+            event.channel.addEventListener('message', event => {
+                log('1: ' + event.data);
+            });
+        });
+    </script>
+</body>
+
+</html>

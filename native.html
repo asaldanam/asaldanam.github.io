@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+        pre {
+            font-size: 11px;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <code id="log"></code>
+    <script>
+        var log = console.log;
+        console.log = function () {
+            const line = document.createElement('pre');
+            line.textContent = JSON.stringify(arguments, null, 2);
+            document.querySelector('#log').prepend(line);
+
+            log.apply(this, Array.prototype.slice.call(arguments));
+        };
+    </script>
+    <script type="module">
+        // import webrtcAdapter from 'https://cdn.jsdelivr.net/npm/webrtc-adapter@9.0.1/+esm'
+        // log('webrtcAdapter browser', webrtcAdapter.browserDetails.browser)
+        // log('webrtcAdapter version', webrtcAdapter.browserDetails.version)
+
+        const isSafariIos = navigator.userAgent.includes('Safari') && navigator.userAgent.includes('Mobile');
+        log({ isSafariIos });
+
+        if (isSafariIos) {
+            const media = await navigator.mediaDevices?.getUserMedia?.({ audio: true, video: true });
+            log({ media: !!media });
+        }
+
+        const config = {
+            iceServers: [
+                {
+                    urls: "stun:stun.l.google.com:19302"
+                },
+                {
+                    urls: "turn:global.relay.metered.ca:80?transport=tcp",
+                    username: "72f8d2483176e6a31214a3a0",
+                    credential: "se8A8xoQLnCi6k+c",
+                },
+                {
+                    urls: "turn:global.relay.metered.ca:443",
+                    username: "72f8d2483176e6a31214a3a",
+                    credential: "se8A8xoQLnCi6k+c",
+                },
+                {
+                    urls: "turns:global.relay.metered.ca:443?transport=tcp",
+                    username: "72f8d2483176e6a31214a3a0",
+                    credential: "se8A8xoQLnCi6k+c",
+                },
+            ],
+        };
+
+        const peer = location.hash === '#host' ? 'host' : 'player';
+
+        const connection = new RTCPeerConnection(config);
+        const channel = connection.createDataChannel(null);
+        window.connection = connection;
+        window.channel = channel;
+
+        let iceCandidatesQueue = [];
+
+        channel.onopen = (e) => {
+            console.log('channel open', e.target);
+            // Enviar los ICE candidates almacenados en la cola
+            while (iceCandidatesQueue.length > 0) {
+                const candidate = iceCandidatesQueue.shift();
+                channel.send(JSON.stringify({ 'ice': candidate }));
+            }
+        };
+
+        channel.onclose = (e) => { console.log('channel close', e.target) };
+        channel.onerror = (e) => { console.log('channel error', e) };
+        channel.onmessage = (e) => {
+            const message = JSON.parse(e.data);
+            if (message.ice) {
+                connection.addIceCandidate(new RTCIceCandidate(message.ice));
+            }
+        };
+
+        connection.onconnectionstatechange = (e) => console.log('connectionstatechange', e.target.connectionState);
+        connection.ondatachannel = (e) => console.log('datachannel', e.channel);
+        connection.onicecandidate = (event) => {
+            console.log('onicecandidate', event.candidate);
+            if (event.candidate) {
+                if (channel.readyState === 'open') {
+                    channel.send(JSON.stringify({ 'ice': event.candidate }));
+                } else {
+                    // Almacenar el ICE candidate en la cola
+                    iceCandidatesQueue.push(event.candidate);
+                }
+            }
+        };
+        connection.onicecandidateerror = (e) => console.log('icecandidateerror', e);
+        connection.oniceconnectionstatechange = (e) => console.log('iceconnectionstatechange', e.target.iceConnectionState);
+        connection.onicegatheringstatechange = (e) => console.log('icegatheringstatechange', e.target.iceGatheringState);
+        connection.onsignalingstatechange = (e) => console.log('signalingstatechange', e.target.signalingState);
+
+
+        async function startConnection() {
+            const signal = { iceRestart: true };
+            if (peer === 'host') {
+                // create local offer
+                const offer = await connection.createOffer(signal);
+                await connection.setLocalDescription(offer);
+                window.prompt('copy offer', JSON.stringify(offer));
+
+                // sets player answer
+                const answer = JSON.parse(window.prompt('paste answer'));
+                await connection.setRemoteDescription(answer);
+            }
+
+            if (peer === 'player') {
+                // set host offer
+                const offer = JSON.parse(window.prompt('paste offer'));
+                await connection.setRemoteDescription(offer);
+
+                // create local answer
+                const answer = await connection.createAnswer(signal);
+                // const answer = await waitToCompleteIceGathering(connection);
+                await connection.setLocalDescription(answer);
+                window.prompt('copy answer', JSON.stringify(answer));
+            }
+        }
+
+        startConnection();
+
+        function waitToCompleteIceGathering(conn) {
+            return new Promise((resolve) => {
+                conn.onconnectionstatechange = (e) => {
+                    if (e.target.connectionState === 'connected') {
+                        resolve(conn.localDescription);
+                    }
+                };
+            });
+        }
+    </script>
+</body>
+
+</html>
