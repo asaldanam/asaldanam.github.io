@@ -61,7 +61,7 @@
             ],
         };
 
-        var connection = new SimplePeer({ trickle: false, config })
+        var connection = new SimplePeer({ config })
 
         connection.on('signal', data => {
             console.log('signal', data)
