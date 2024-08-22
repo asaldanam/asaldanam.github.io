@@ -84,12 +84,12 @@
     await peer2.setLocalDescription(answer);
     await peer1.setRemoteDescription(answer);
 
-    peer1.addEventListener('icecandidate', event => {
-      log('1 ICE candidate ' + (event.candidate ? event.candidate.candidate : 'null'))
-      if (event.candidate !== null) {
-        peer2.addIceCandidate(event.candidate);
-      }
-    });
+    // peer1.addEventListener('icecandidate', event => {
+    //   log('1 ICE candidate ' + (event.candidate ? event.candidate.candidate : 'null'))
+    //   if (event.candidate !== null) {
+    //     peer2.addIceCandidate(event.candidate);
+    //   }
+    // });
 
     dataChannel.addEventListener('open', () => {
       dataChannel.send('message from 1 to 2');
