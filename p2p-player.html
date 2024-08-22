@@ -33,7 +33,35 @@
         };
     </script>
     <script>
-        var connection = new SimplePeer({ trickle: false })
+        const config = {
+            iceServers: [
+                {
+                    urls: "stun:stun.relay.metered.ca:80",
+                },
+                {
+                    urls: "turn:global.relay.metered.ca:80",
+                    username: "72f8d2483176e6a31214a3a0",
+                    credential: "se8A8xoQLnCi6k+c",
+                },
+                {
+                    urls: "turn:global.relay.metered.ca:80?transport=tcp",
+                    username: "72f8d2483176e6a31214a3a0",
+                    credential: "se8A8xoQLnCi6k+c",
+                },
+                {
+                    urls: "turn:global.relay.metered.ca:443",
+                    username: "72f8d2483176e6a31214a3a0",
+                    credential: "se8A8xoQLnCi6k+c",
+                },
+                {
+                    urls: "turns:global.relay.metered.ca:443?transport=tcp",
+                    username: "72f8d2483176e6a31214a3a0",
+                    credential: "se8A8xoQLnCi6k+c",
+                },
+            ],
+        };
+
+        var connection = new SimplePeer({ trickle: false, config })
 
         connection.on('signal', data => {
             console.log('signal', data)
