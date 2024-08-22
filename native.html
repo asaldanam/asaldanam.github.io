@@ -15,7 +15,7 @@
 
 <body>
     <code id="log"></code>
-    <script>
+    <!-- <script>
         var log = console.log;
         console.log = function () {
             const line = document.createElement('pre');
@@ -24,18 +24,18 @@
 
             log.apply(this, Array.prototype.slice.call(arguments));
         };
-    </script>
+    </script> -->
     <script type="module">
         // import webrtcAdapter from 'https://cdn.jsdelivr.net/npm/webrtc-adapter@9.0.1/+esm'
         // log('webrtcAdapter browser', webrtcAdapter.browserDetails.browser)
         // log('webrtcAdapter version', webrtcAdapter.browserDetails.version)
 
         const isSafariIos = navigator.userAgent.includes('Safari') && navigator.userAgent.includes('Mobile');
-        log({ isSafariIos });
+        console.log({ isSafariIos });
 
         if (isSafariIos) {
             const media = await navigator.mediaDevices?.getUserMedia?.({ audio: true, video: true });
-            log({ media: !!media });
+            console.og({ media: !!media });
         }
 
         const config = {
@@ -61,87 +61,170 @@
             ],
         };
 
-        const peer = location.hash === '#host' ? 'host' : 'player';
+        const peer = location.hash === '#host' ? 'host' : 'guest';
 
-        const connection = new RTCPeerConnection(config);
-        const channel = connection.createDataChannel(null);
+        const connection = new RTCPeerConnection();
+        const channel = connection.createDataChannel('state');
         window.connection = connection;
         window.channel = channel;
 
-        let iceCandidatesQueue = [];
+        // channel.onclose = (e) => { console.log('channel close', e.target) };
+        // channel.onerror = (e) => { console.log('channel error', e) };
+        // channel.onmessage = (e) => { console.log('channel message', e.data) };
+        // channel.onopen = (e) => { console.log('channel open', e.data) };
 
-        channel.onopen = (e) => {
-            console.log('channel open', e.target);
-            // Enviar los ICE candidates almacenados en la cola
-            while (iceCandidatesQueue.length > 0) {
-                const candidate = iceCandidatesQueue.shift();
-                channel.send(JSON.stringify({ 'ice': candidate }));
-            }
-        };
-
-        channel.onclose = (e) => { console.log('channel close', e.target) };
-        channel.onerror = (e) => { console.log('channel error', e) };
-        channel.onmessage = (e) => {
-            const message = JSON.parse(e.data);
-            if (message.ice) {
-                connection.addIceCandidate(new RTCIceCandidate(message.ice));
-            }
-        };
-
-        connection.onconnectionstatechange = (e) => console.log('connectionstatechange', e.target.connectionState);
-        connection.ondatachannel = (e) => console.log('datachannel', e.channel);
-        connection.onicecandidate = (event) => {
-            console.log('onicecandidate', event.candidate);
-            if (event.candidate) {
-                if (channel.readyState === 'open') {
-                    channel.send(JSON.stringify({ 'ice': event.candidate }));
-                } else {
-                    // Almacenar el ICE candidate en la cola
-                    iceCandidatesQueue.push(event.candidate);
-                }
-            }
-        };
-        connection.onicecandidateerror = (e) => console.log('icecandidateerror', e);
-        connection.oniceconnectionstatechange = (e) => console.log('iceconnectionstatechange', e.target.iceConnectionState);
-        connection.onicegatheringstatechange = (e) => console.log('icegatheringstatechange', e.target.iceGatheringState);
-        connection.onsignalingstatechange = (e) => console.log('signalingstatechange', e.target.signalingState);
+        // connection.onconnectionstatechange = (e) => console.log('connectionstatechange', e.target.connectionState);
+        // connection.ondatachannel = (e) => console.log('datachannel', e.channel);
+        // connection.onicecandidate = (event) => console.info(event.candidate);
+        // connection.onicecandidateerror = (e) => console.warn(e);
+        // connection.oniceconnectionstatechange = (e) => console.log('iceconnectionstatechange', e.target.iceConnectionState);
+        // connection.onicegatheringstatechange = (e) => console.log('icegatheringstatechange', e.target.iceGatheringState);
+        // connection.onsignalingstatechange = (e) => console.log('signalingstatechange', e.target.signalingState);
 
 
-        async function startConnection() {
-            const signal = { iceRestart: true };
+        async function connect() {
             if (peer === 'host') {
-                // create local offer
-                const offer = await connection.createOffer(signal);
+                // create local sdp
+                const offer = await connection.createOffer();
                 await connection.setLocalDescription(offer);
-                window.prompt('copy offer', JSON.stringify(offer));
+                const localSpd = await createLocalSdp(connection);
 
-                // sets player answer
-                const answer = JSON.parse(window.prompt('paste answer'));
-                await connection.setRemoteDescription(answer);
+                // send local sdp
+                await sendLocalSdp(connection);
+
+                // accept guest answer
+                const remoteSpd = await getRemoteSdp();
+                await connection.setRemoteDescription({ type: 'answer', sdp: remoteSpd });
             }
 
-            if (peer === 'player') {
-                // set host offer
-                const offer = JSON.parse(window.prompt('paste offer'));
-                await connection.setRemoteDescription(offer);
+            if (peer === 'guest') {
+                // accept host offer
+                const remoteSpd = await getRemoteSdp();
+                await connection.setRemoteDescription({ type: 'offer', sdp: remoteSpd });
 
-                // create local answer
-                const answer = await connection.createAnswer(signal);
-                // const answer = await waitToCompleteIceGathering(connection);
+                // create local sdp
+                const answer = await connection.createAnswer();
                 await connection.setLocalDescription(answer);
-                window.prompt('copy answer', JSON.stringify(answer));
+                const localSpd = await createLocalSdp(connection);
+                await sendLocalSdp(connection);
             }
+
+            // await waitForReady(connection);
+            // await waitForConnectionState(connection, 'connected');
+            // await waitForDataChannel(connection);
+            // await waitForChannelOpen(channel);
+
+            // connection.addEventListener('datachannel', event => {
+            //     console.log(event.channel, 'dc 2');
+            //     event.channel.addEventListener('open', () => {
+            //         event.channel.send('message from 2 to 1');
+            //     });
+
+            //     event.channel.addEventListener('message', event => {
+            //         console.log('1: ' + event.data);
+            //     });
+            // });
+
+            const c = await new Promise((resolve) => {
+                connection.addEventListener('datachannel', event => {
+                    console.log(event.channel, 'dc 2');
+                    event.channel.addEventListener('open', () => {
+                        event.channel.send('message from 2 to 1');
+                    });
+                    resolve(event.channel);
+                    // event.channel.addEventListener('message', event => {
+                    //     console.log('Inside' + event.data);
+                    // });
+                });
+            })
+
+            console.log('channel ready', c)
+
+            c.addEventListener('message', event => {
+                console.log('Outside' + event.data);
+            });
+
+            console.log('ready')
+
+            // await waitForChannelOpen(channel);
+            // console.log(connection.connectionState, connection)
+            // console.log(channel.readyState, channel)
+
+            // console.log(channel, channel.send)
+
+            // channel.onclose = (e) => { console.log('channel close', e.target) };
+            // channel.onclosing = (e) => { console.log('channel closing', e.data) };
+            // channel.onerror = (e) => { console.log('channel error', e) };
+            // channel.onmessage = (e) => { console.log('channel message', e.data) };
+            // channel.onopen = (e) => { console.log('channel open', e.data) };
+
+
+            // if (peer === "host") {
+            //     channel.send('ok');
+            //     await waitForOk();
+            //     console.log('HOST CONNECTED!!!!')
+            // }
+
+            // if (peer === 'guest') {
+            //     await waitForOk();
+            //     channel.send('ok');
+            // }
         }
 
-        startConnection();
+        connect();
 
-        function waitToCompleteIceGathering(conn) {
+
+        async function sendLocalSdp(connection) {
+            window.prompt('copy local sdp', JSON.stringify(connection.localDescription.sdp));
+        }
+
+        async function getRemoteSdp() {
+            const sdp = JSON.parse(window.prompt('paste remote sdp'));
+            console.log('Remote SDP retrived');
+            return sdp;
+        }
+
+        async function createLocalSdp(connection) {
+            return new Promise(r => connection.onicegatheringstatechange = (event) => {
+                if (connection.iceGatheringState === 'complete') {
+                    const sdp = connection.localDescription.sdp;
+                    console.log('Local SDP created');
+                    r(sdp);
+                }
+            });
+        }
+
+        async function waitForConnectionState(connection, state) {
+            return new Promise(r => connection.addEventListener('connectionstatechange', () => {
+                if (connection.connectionState === state) {
+                    console.log('Conection state:', state.toUpperCase());
+                    r();
+                }
+            }));
+        }
+
+        async function waitForReady(connection) {
             return new Promise((resolve) => {
-                conn.onconnectionstatechange = (e) => {
-                    if (e.target.connectionState === 'connected') {
-                        resolve(conn.localDescription);
-                    }
-                };
+                connection.addEventListener('datachannel', event => {
+                    console.log(event.channel, 'dc 2');
+                    event.channel.addEventListener('open', () => {
+                        event.channel.send('message from 2 to 1');
+                        resolve();
+                    });
+                });
+            })
+        }
+
+        async function waitForChannelOpen(channel) {
+            return new Promise(r => channel.onopen = () => {
+                console.log('Channel open');
+                r();
+            });
+        }
+
+        async function waitForOk() {
+            return new Promise(r => channel.onmessage = (e) => {
+                if (e.data === 'ok') r();
             });
         }
     </script>
