@@ -132,40 +132,6 @@
                 }
             });
         }
-
-        async function waitForConnectionState(connection, state) {
-            return new Promise(r => connection.addEventListener('connectionstatechange', () => {
-                if (connection.connectionState === state) {
-                    console.log('Conection state:', state.toUpperCase());
-                    r();
-                }
-            }));
-        }
-
-        async function waitForReady(connection) {
-            return new Promise((resolve) => {
-                connection.addEventListener('datachannel', event => {
-                    console.log(event.channel, 'dc 2');
-                    event.channel.addEventListener('open', () => {
-                        event.channel.send('message from 2 to 1');
-                        resolve();
-                    });
-                });
-            })
-        }
-
-        async function waitForChannelOpen(channel) {
-            return new Promise(r => channel.onopen = () => {
-                console.log('Channel open');
-                r();
-            });
-        }
-
-        async function waitForOk() {
-            return new Promise(r => channel.onmessage = (e) => {
-                if (e.data === 'ok') r();
-            });
-        }
     </script>
 </body>
 
