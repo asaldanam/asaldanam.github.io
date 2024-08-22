@@ -43,7 +43,7 @@
 
         connection.on('connect', () => {
             console.log('connected')
-            connection.send('H: hey player, how is it going?')
+            connection.send('REQUEST PAIRING')
         })
 
         connection.on('data', data => {

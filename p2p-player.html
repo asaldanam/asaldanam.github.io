@@ -40,9 +40,10 @@
             if (data.type === 'answer') document.querySelector('#answer').textContent = JSON.stringify(data)
         })
 
-        // connection.on('connect', () => {
-        //     console.log('connected')
-        // })
+        connection.on('connect', () => {
+            console.log('connected')
+            connection.send('PAIRING ACCEPTED')
+        })
 
         connection.on('data', data => {
             const line = document.createElement('div');
