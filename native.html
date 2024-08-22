@@ -68,20 +68,6 @@
         window.connection = connection;
         window.channel = channel;
 
-        // channel.onclose = (e) => { console.log('channel close', e.target) };
-        // channel.onerror = (e) => { console.log('channel error', e) };
-        // channel.onmessage = (e) => { console.log('channel message', e.data) };
-        // channel.onopen = (e) => { console.log('channel open', e.data) };
-
-        // connection.onconnectionstatechange = (e) => console.log('connectionstatechange', e.target.connectionState);
-        // connection.ondatachannel = (e) => console.log('datachannel', e.channel);
-        // connection.onicecandidate = (event) => console.info(event.candidate);
-        // connection.onicecandidateerror = (e) => console.warn(e);
-        // connection.oniceconnectionstatechange = (e) => console.log('iceconnectionstatechange', e.target.iceConnectionState);
-        // connection.onicegatheringstatechange = (e) => console.log('icegatheringstatechange', e.target.iceGatheringState);
-        // connection.onsignalingstatechange = (e) => console.log('signalingstatechange', e.target.signalingState);
-
-
         async function connect() {
             if (peer === 'host') {
                 // create local sdp
@@ -109,66 +95,19 @@
                 await sendLocalSdp(connection);
             }
 
-            // await waitForReady(connection);
-            // await waitForConnectionState(connection, 'connected');
-            // await waitForDataChannel(connection);
-            // await waitForChannelOpen(channel);
-
-            // connection.addEventListener('datachannel', event => {
-            //     console.log(event.channel, 'dc 2');
-            //     event.channel.addEventListener('open', () => {
-            //         event.channel.send('message from 2 to 1');
-            //     });
-
-            //     event.channel.addEventListener('message', event => {
-            //         console.log('1: ' + event.data);
-            //     });
-            // });
-
-            const c = await new Promise((resolve) => {
+            const openedChannel = await new Promise((resolve) => {
                 connection.addEventListener('datachannel', event => {
-                    console.log(event.channel, 'dc 2');
-                    event.channel.addEventListener('open', () => {
-                        event.channel.send('message from 2 to 1');
-                    });
                     resolve(event.channel);
-                    // event.channel.addEventListener('message', event => {
-                    //     console.log('Inside' + event.data);
-                    // });
                 });
-            })
-
-            console.log('channel ready', c)
-
-            c.addEventListener('message', event => {
-                console.log('Outside' + event.data);
             });
 
-            console.log('ready')
+            openedChannel.addEventListener('message', event => {
+                console.log(event.data);
+            });
 
-            // await waitForChannelOpen(channel);
-            // console.log(connection.connectionState, connection)
-            // console.log(channel.readyState, channel)
-
-            // console.log(channel, channel.send)
-
-            // channel.onclose = (e) => { console.log('channel close', e.target) };
-            // channel.onclosing = (e) => { console.log('channel closing', e.data) };
-            // channel.onerror = (e) => { console.log('channel error', e) };
-            // channel.onmessage = (e) => { console.log('channel message', e.data) };
-            // channel.onopen = (e) => { console.log('channel open', e.data) };
-
-
-            // if (peer === "host") {
-            //     channel.send('ok');
-            //     await waitForOk();
-            //     console.log('HOST CONNECTED!!!!')
-            // }
-
-            // if (peer === 'guest') {
-            //     await waitForOk();
-            //     channel.send('ok');
-            // }
+            setInterval(() => {
+                channel.send(`Prueba desde ${peer}, ${new Date().toISOString()}`);
+            }, 1000);
         }
 
         connect();
