@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h3>Offer:</h3>
+    <code id="offer">loading offer...</code>
+
+    <h3>Answer:</h3>
+    <input id="answer" placeholder="Paste answer here" />
+
+    <h3>Chat</h3>
+    <input id="input" placeholder="Type message here" /><button id="send">SEND</button>
+    <div id="chat"></div>
+
+    <h3>Log</h3>
+    <code style="font-size: smaller;" id="log"></code>
+
+    <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
+    <script>
+        var log = console.log;
+        console.log = function () {
+            const line = document.createElement('pre');
+            line.textContent = JSON.stringify(arguments, null, 2);
+            document.querySelector('#log').prepend(line);
+
+            log.apply(this, Array.prototype.slice.call(arguments));
+        };
+    </script>
+    <script>
+        var connection = new SimplePeer({ initiator: true, trickle: false })
+
+        connection.on('signal', data => {
+            // when peer1 has signaling data, give it to peer2 somehow
+            console.log('signal', data)
+            if (data.type === 'offer') document.querySelector('#offer').textContent = JSON.stringify(data)
+        })
+
+        connection.on('connect', () => {
+            console.log('connected')
+            connection.send('H: hey player, how is it going?')
+        })
+
+        connection.on('data', data => {
+            const line = document.createElement('div');
+            line.innerHTML = 'Player: ' + data;
+            document.querySelector('#chat').prepend(line);
+        })
+
+        connection.on('error', error => {
+            console.log('error:', error)
+        })
+
+        document.querySelector('#answer').addEventListener('input', e => {
+            console.log('payload', e.target.value)
+            const answer = JSON.parse(e.target.value);
+            console.log('set answer', e.target.value)
+            connection.signal(answer)
+        })
+
+        document.querySelector('#send').addEventListener('click', () => {
+            const value = document.querySelector('#input').value;
+
+            const line = document.createElement('div');
+            line.innerHTML = 'Host: ' + value;
+            document.querySelector('#chat').prepend(line);
+            connection.send(value);
+
+            document.querySelector('#input').value = '';
+        })
+    </script>
+</body>
+
+</html>

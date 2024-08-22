@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h3>Offer:</h3>
+    <input id="offer" placeholder="Paste ofer here" />
+
+    <h3>Answer:</h3>
+    <code id="answer"></code>
+
+    <h3>Chat</h3>
+    <input id="input" placeholder="Type message here" /><button id="send">SEND</button>
+    <div id="chat"></div>
+
+    <h3>Log</h3>
+    <pre style="font-size: smaller;" id="log"></pre>
+
+    <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
+    <script>
+        var log = console.log;
+        console.log = function () {
+            const line = document.createElement('pre');
+            line.textContent = JSON.stringify(arguments, null, 2);
+            document.querySelector('#log').prepend(line);
+
+            log.apply(this, Array.prototype.slice.call(arguments));
+        };
+    </script>
+    <script>
+        var connection = new SimplePeer({ trickle: false })
+
+        connection.on('signal', data => {
+            console.log('signal', data)
+            if (data.type === 'answer') document.querySelector('#answer').textContent = JSON.stringify(data)
+        })
+
+        // connection.on('connect', () => {
+        //     console.log('connected')
+        // })
+
+        connection.on('data', data => {
+            const line = document.createElement('div');
+            line.innerHTML = 'Host: ' + data;
+            document.querySelector('#chat').prepend(line);
+        })
+
+        connection.on('error', error => {
+            console.log('error:', error)
+        })
+
+        document.querySelector('#offer').addEventListener('input', e => {
+            connection.signal(JSON.parse(e.target.value))
+        })
+
+        document.querySelector('#send').addEventListener('click', () => {
+            const value = document.querySelector('#input').value;
+
+            const line = document.createElement('div');
+            line.innerHTML = 'Host: ' + value;
+            document.querySelector('#chat').prepend(line);
+            connection.send(value);
+
+            document.querySelector('#input').value = '';
+        })
+    </script>
+</body>
+
+</html>
