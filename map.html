@@ -1,0 +1,295 @@
+<!doctype html>
+<!--
+ @license
+ Copyright 2019 Google LLC. All Rights Reserved.
+ SPDX-License-Identifier: Apache-2.0
+-->
+<html>
+
+<head>
+
+    <script>
+        window.__data = {
+            "SELECT g.empresa, d.direccion\nFROM gestora g\nINNER JOIN (\n    SELECT direccion, gestora_id\n    FROM (\n        SELECT direccion, gestora_id, ROW_NUMBER() OVER(PARTITION BY gestora_id ORDER BY direccion) as rn\n        FROM direccion\n        WHERE tipo_id = 5701\n    ) x\n    WHERE rn = 1\n) d ON g.id = d.gestora_id": [
+                {
+                    "empresa": "PRUEBA",
+                    "direccion": "Calle DE NICARAGUA 15 LOCAL"
+                },
+                {
+                    "empresa": "Contenedores Norte Sur",
+                    "direccion": "Rúa Chan da Parafita, 2, 36158 Pontevedra"
+                },
+                {
+                    "empresa": "Recinor gestión de residuos SL",
+                    "direccion": "Crta. Catabois, Km. 3,7 15405 Ferrol, A Coruña"
+                },
+                {
+                    "empresa": "Cogami Reciclado De Galicia Sl Coregal",
+                    "direccion": "C\/ Republica Checa, 17 P.e. Costa Vella  15707  - (Santiago De Compostela) - La Coruña"
+                },
+                {
+                    "empresa": "Gestan Conteco Acttia Medioambiental",
+                    "direccion": "Avenida Da Praia, Parcela 108-b, Polígono Industrial Sabón  15142  - (Arteixo) - A Coruña"
+                },
+                {
+                    "empresa": "Bizkaiko Txintxor Berziklategia Es Una Gestora\/Valorizadora Del Grupo Campezo",
+                    "direccion": "Barrio Orkonera, S\/N. 48530 Ortuella. Bizkaia"
+                },
+                {
+                    "empresa": "EKOTRADE RCD´s, S.L.",
+                    "direccion": "Inaxio Berasarte Bidea, 20115 Astigarraga, Gipuzkoa"
+                },
+                {
+                    "empresa": "Urkiondo Ekolur",
+                    "direccion": "CALLE LEIZOTZ AUZOA, CASA URKIONDO - 20140 ANDOAIN (Gipuzkoa)"
+                },
+                {
+                    "empresa": "Arregi Etxabe Juan Jose",
+                    "direccion": "Uparan Pol., 2, 20150 Aduna, Gipuzkoa"
+                },
+                {
+                    "empresa": "Naparra Bergara SL",
+                    "direccion": "industrialdea, 20570 Bergara, Gipuzkoa"
+                },
+                {
+                    "empresa": "Contenedores Vascos",
+                    "direccion": "Polig P.a.e. Asuaran Carretera Bilbao-plencia 17 O  48950  - (Erandio) - Vizcaya"
+                },
+                {
+                    "empresa": "Palets Del Valle",
+                    "direccion": "Barrio Bentakoerreka, 48480 Arrigorriaga, Bizkaia"
+                },
+                {
+                    "empresa": "Áridos reciclados de Navarra, SL",
+                    "direccion": "CALLE ZALATAMBOR 12, 31200 ESTELLA navarra"
+                },
+            ]
+        }
+    </script>
+
+    <title>Distance Matrix Service</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /**
+        * @license
+        * Copyright 2019 Google LLC. All Rights Reserved.
+        * SPDX-License-Identifier: Apache-2.0
+        */
+        /* Optional: Makes the sample page fill the window. */
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        #sidebar {
+            padding: 1rem;
+        }
+
+        #map {
+            height: 400px;
+        }
+
+        table {
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        th {
+            text-align: left;
+        }
+
+        th,
+        td {
+            padding: 0.25rem 0.5rem;
+            white-space: wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <div id="map"></div>
+        <div id="sidebar">
+            <!-- <h3 style="flex-grow: 0; display: none">Request</h3>
+            <pre style="flex-grow: 1; display: none" id="request"></pre> -->
+            <!-- <h3 style="flex-grow: 0;">Response</h3> -->
+            <pre style="flex-grow: 1" id="response"></pre>
+        </div>
+    </div>
+
+    <!-- 
+      The `defer` attribute causes the script to execute after the full HTML
+      document has been parsed. For non-blocking uses, avoiding race conditions,
+      and consistent behavior across browsers, consider loading using Promises. See
+      https://developers.google.com/maps/documentation/javascript/load-maps-js-api
+      for more information.
+      -->
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&callback=initMap&v=weekly"
+        defer></script>
+    <script>
+        const origins = [
+            {
+                name: 'Mapeo villaverde',
+                address: 'Avenida Rafaela Ybarra Rafaela Ybarra Nº 7B 28041, Madrid'
+            },
+        ]
+
+        // const destinations = [
+        //     {
+        //         name: 'Grupo layna gestion de residuos, SL (Planta horche)',
+        //         address: 'C/ Perú 32-33, Pol. Ind. Azque 28806 Alcalá de Henares (Madrid)'
+        //     },
+        //     {
+        //         name: 'Salmedina tratamiento de residuos inertes, SL (Salmedina tri)',
+        //         address: 'Camino ACEITEROS 101, 28052 Madrid'
+        //     },
+        // ]
+
+        const data = Object.values(window.__data)[0].slice(0, 24);
+
+
+        const destinations = data.map(item => ({
+            name: item.empresa,
+            address: item.direccion
+        }))
+
+        console.log({ destinations })
+
+        // console.log(Object.values(window.__data)[0])
+
+        /**
+        * @license
+        * Copyright 2019 Google LLC. All Rights Reserved.
+        * SPDX-License-Identifier: Apache-2.0
+        */
+        // @ts-nocheck TODO remove when fixed
+        function initMap() {
+            const bounds = new google.maps.LatLngBounds();
+            const markersArray = [];
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 55.53, lng: 9.4 },
+                zoom: 10,
+            });
+
+            // initialize services
+            const geocoder = new google.maps.Geocoder();
+            const service = new google.maps.DistanceMatrixService();
+
+            const request = {
+                origins: origins.map(o => o.address),
+                destinations: destinations.map(d => d.address),
+                travelMode: google.maps.TravelMode.DRIVING,
+                unitSystem: google.maps.UnitSystem.METRIC,
+                avoidHighways: false,
+                avoidTolls: false,
+            };
+
+            // // put request on page
+            // document.getElementById("request").innerText = JSON.stringify(
+            //     request,
+            //     null,
+            //     2,
+            // );
+
+            // get distance matrix response
+            service.getDistanceMatrix(request).then((response) => {
+                const data = {
+                    origin: origins[0],
+                    distances: response.rows[0].elements.map((e, i) => ({
+                        km: e.distance?.text,
+                        kmVal: e.distance?.value,
+                        time: e.duration?.text,
+                        timeMinutes: e.duration?.value / 60,
+                        name: destinations?.[i]?.name,
+                        address: destinations?.[1]?.address
+                    }))
+                }
+
+                // put response
+                document.getElementById("response").innerHTML = /*html*/`
+            <table id="#table">
+                <thead>
+                    <tr>
+                        <th>Destino</th>
+                        <th>Dirección</th>
+                        <th>Distancia</th>
+                        <th>Tiempo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.distances.map(d => /*html*/`
+                        <tr>
+                            <td>${d.name}</td>
+                            <td>${d.address}</td>
+                            <td>${d.km}</td>
+                            <td>${d.time}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+                // document.getElementById("response").innerText = JSON.stringify(
+                //     data,
+                //     null,
+                //     2,
+                // );
+
+                // show on map
+                const originList = response.originAddresses;
+                const destinationList = response.destinationAddresses;
+
+                deleteMarkers(markersArray);
+
+                const showGeocodedAddressOnMap = (asDestination) => {
+                    const handler = ({ results }) => {
+                        map.fitBounds(bounds.extend(results[0].geometry.location));
+                        markersArray.push(
+                            new google.maps.Marker({
+                                map,
+                                position: results[0].geometry.location,
+                                label: asDestination ? "D" : "O",
+                            }),
+                        );
+                    };
+
+                    return handler;
+                };
+
+                for (let i = 0; i < originList.length; i++) {
+                    const results = response.rows[i].elements;
+                    geocoder
+                        .geocode({ address: originList[i] })
+                        .then(showGeocodedAddressOnMap(false));
+
+                    for (let j = 0; j < results.length; j++) {
+                        geocoder
+                            .geocode({ address: destinationList[j] })
+                            .then(showGeocodedAddressOnMap(true));
+                    }
+                }
+
+            });
+        }
+
+        function deleteMarkers(markersArray) {
+            for (let i = 0; i < markersArray.length; i++) {
+                markersArray[i].setMap(null);
+            }
+
+            markersArray = [];
+        }
+
+        window.initMap = initMap;
+
+    </script>
+</body>
+
+</html>
